@@ -3,7 +3,7 @@
  * Plugin Name:       KI-Kennzeichnung für Medien
  * Plugin URI:        https://example.com/
  * Description:       Markiert Bilder und Medien in der Mediathek als KI-generiert und blendet im Frontend automatisch einen Hinweis ein – dauerhaft, beim Hover oder als Bildunterschrift.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            —
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class AIKZ_Plugin {
 
-	const VERSION   = '1.1.0';
+	const VERSION   = '1.2.0';
 	const META_FLAG = '_aikz_is_ai';
 	const META_TEXT = '_aikz_text';
 	const OPTION    = 'aikz_settings';
@@ -76,6 +76,7 @@ final class AIKZ_Plugin {
 		return array(
 			'label'          => 'KI-generiert',
 			'mode'           => 'always',         // always | both | caption | hover
+			'layout'         => 'auto',           // auto | fill | nowrap
 			'position'       => 'bottom-right',   // top-left | top-right | bottom-left | bottom-right
 			'bg'             => '#000000',
 			'opacity'        => 72,
@@ -119,6 +120,7 @@ final class AIKZ_Plugin {
 		}
 
 		$out['mode']     = in_array( $input['mode'] ?? '', array( 'always', 'both', 'caption', 'hover' ), true ) ? $input['mode'] : $d['mode'];
+		$out['layout']   = in_array( $input['layout'] ?? '', array( 'auto', 'fill', 'nowrap' ), true ) ? $input['layout'] : $d['layout'];
 		$out['position'] = in_array( $input['position'] ?? '', array( 'top-left', 'top-right', 'bottom-left', 'bottom-right' ), true ) ? $input['position'] : $d['position'];
 
 		$out['bg']    = sanitize_hex_color( $input['bg'] ?? '' ) ?: $d['bg'];
@@ -219,6 +221,19 @@ final class AIKZ_Plugin {
 							</fieldset>
 							<p class="description">
 								<?php esc_html_e( 'Wo eine Kennzeichnungspflicht besteht, muss der Hinweis ohne Zutun der Nutzer erkennbar sein. Der Hover-Modus versteckt ihn bis zur Mausbewegung und ist deshalb nur für rein dekorative Zwecke gedacht.', 'ki-kennzeichnung' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Einbindung ins Layout', 'ki-kennzeichnung' ); ?></th>
+						<td>
+							<fieldset>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[layout]" value="auto" <?php checked( $s['layout'], 'auto' ); ?>> <strong><?php esc_html_e( 'Automatisch', 'ki-kennzeichnung' ); ?></strong> — <?php esc_html_e( 'Hinweis-Container passt sich dem Bild an (Standard)', 'ki-kennzeichnung' ); ?></label><br>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[layout]" value="fill" <?php checked( $s['layout'], 'fill' ); ?>> <?php esc_html_e( 'Container füllen', 'ki-kennzeichnung' ); ?> — <?php esc_html_e( 'für Karten, Slider und Raster mit fester Bildhöhe', 'ki-kennzeichnung' ); ?></label><br>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[layout]" value="nowrap" <?php checked( $s['layout'], 'nowrap' ); ?>> <?php esc_html_e( 'Ohne Container (JavaScript)', 'ki-kennzeichnung' ); ?> — <?php esc_html_e( 'Bild bleibt unverändert im HTML, Layout wird garantiert nicht beeinflusst', 'ki-kennzeichnung' ); ?></label>
+							</fieldset>
+							<p class="description">
+								<?php esc_html_e( 'Ändert sich die Bildgröße durch die Kennzeichnung, liegt es an diesem Container. Reihenfolge zum Ausprobieren: „Automatisch“ → „Container füllen“ → „Ohne Container“.', 'ki-kennzeichnung' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -596,6 +611,58 @@ final class AIKZ_Plugin {
 		wp_register_style( 'aikz', false, array(), self::VERSION );
 		wp_enqueue_style( 'aikz' );
 		wp_add_inline_style( 'aikz', $this->css() );
+
+		$s = $this->settings();
+		if ( 'nowrap' !== $s['layout'] ) {
+			return;
+		}
+
+		$config = array(
+			'mode'    => $s['mode'],
+			'pos'     => $s['position'],
+			'icon'    => $s['icon'] ? $this->icon_svg() : '',
+			'caption' => in_array( $s['mode'], array( 'caption', 'both' ), true ),
+			'overlay' => 'caption' !== $s['mode'],
+		);
+
+		wp_register_script( 'aikz-front', false, array(), self::VERSION, true );
+		wp_enqueue_script( 'aikz-front' );
+		wp_add_inline_script(
+			'aikz-front',
+			'(function(){var c=' . wp_json_encode( $config ) . ';
+			function badge(t){var b=document.createElement("span");
+				b.className="aikz-badge";b.setAttribute("role","note");
+				if(c.icon){b.innerHTML=c.icon;}
+				var s=document.createElement("span");s.className="aikz-badge__text";s.textContent=t;
+				b.appendChild(s);return b;}
+			function caption(t){var s=document.createElement("span");
+				s.className="aikz-caption";s.textContent=t;return s;}
+			function init(){
+				var imgs=document.querySelectorAll("img[data-aikz-label]");
+				for(var i=0;i<imgs.length;i++){
+					var img=imgs[i];
+					if(img.getAttribute("data-aikz-done"))continue;
+					img.setAttribute("data-aikz-done","1");
+					var t=img.getAttribute("data-aikz-label")||"";
+					var host=img.parentElement;
+					if(host&&host.tagName==="PICTURE"&&host.parentElement)host=host.parentElement;
+					if(!host)continue;
+					if(c.overlay){
+						host.classList.add("aikz-host","aikz-mode-"+c.mode,"aikz-pos-"+c.pos);
+						host.appendChild(badge(t));
+					}
+					if(c.caption){
+						var cap=caption(t);
+						if(img.nextSibling)img.parentNode.insertBefore(cap,img.nextSibling);
+						else img.parentNode.appendChild(cap);
+					}
+				}
+			}
+			if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
+			else init();
+			document.addEventListener("aikz:refresh",init);
+			})();'
+		);
 	}
 
 	private function hex_to_rgba( $hex, $opacity ) {
@@ -621,7 +688,10 @@ final class AIKZ_Plugin {
 
 		$css = '
 		.aikz-wrap{position:relative;display:inline-block;max-width:100%;line-height:0;vertical-align:top}
-		.aikz-wrap>img{max-width:100%;height:auto}
+		/* Bewusst KEINE Größenangaben am Bild – sonst überschreiben wir Theme-Layouts. */
+		.aikz-layout-fill.aikz-wrap{display:block;width:100%;height:100%;max-width:none}
+		.aikz-layout-fill.aikz-wrap>img{display:block;width:100%;height:100%;object-fit:cover}
+		.aikz-host{position:relative}
 		.aikz-badge{position:absolute;z-index:2;display:inline-flex;align-items:center;gap:.35em;
 			padding:.32em .6em;margin:0;line-height:1.25;white-space:nowrap;max-width:calc(100% - 1em);
 			overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-decoration:none;
@@ -654,17 +724,18 @@ final class AIKZ_Plugin {
 		return preg_replace( '/\s*\n\s*/', ' ', trim( $css ) );
 	}
 
+	public function icon_svg() {
+		return '<svg class="aikz-badge__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">'
+			. '<path d="M12 2l1.9 5.6L19.5 9.5 13.9 11.4 12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2z"/>'
+			. '<path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" opacity=".7"/>'
+			. '</svg>';
+	}
+
 	public function badge_html( $attachment_id ) {
 		$s    = $this->settings();
 		$text = $this->label_for( $attachment_id );
 
-		$icon = '';
-		if ( ! empty( $s['icon'] ) ) {
-			$icon = '<svg class="aikz-badge__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">'
-				. '<path d="M12 2l1.9 5.6L19.5 9.5 13.9 11.4 12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2z"/>'
-				. '<path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z" opacity=".7"/>'
-				. '</svg>';
-		}
+		$icon = ! empty( $s['icon'] ) ? $this->icon_svg() : '';
 
 		$html = '<span class="aikz-badge" role="note">' . $icon . '<span class="aikz-badge__text">' . esc_html( $text ) . '</span></span>';
 
@@ -679,6 +750,20 @@ final class AIKZ_Plugin {
 		return '<span class="aikz-caption">' . esc_html( $text ) . '</span>';
 	}
 
+	/**
+	 * Fügt dem <img>-Tag die Marker-Attribute hinzu, ohne das Markup zu verändern.
+	 */
+	private function mark_img( $html, $attachment_id ) {
+		if ( false !== stripos( $html, 'data-aikz-label' ) ) {
+			return $html;
+		}
+		$add = sprintf( ' data-aikz-label="%s"', esc_attr( $this->label_for( $attachment_id ) ) );
+		if ( false === stripos( $html, 'data-ai-generated' ) ) {
+			$add .= ' data-ai-generated="true"';
+		}
+		return preg_replace( '#<img\b#i', '<img' . $add, $html, 1 );
+	}
+
 	private function wrap( $html, $attachment_id ) {
 		if ( false !== strpos( $html, 'aikz-wrap' ) ) {
 			return $html; // Bereits gekennzeichnet.
@@ -686,8 +771,15 @@ final class AIKZ_Plugin {
 		$s    = $this->settings();
 		$mode = $s['mode'];
 
+		// Ohne Wrapper: Bild bleibt exakt an seiner Stelle im DOM, das Badge
+		// wird per JS an das Elternelement gehängt. Kein Layout-Eingriff.
+		if ( 'nowrap' === $s['layout'] ) {
+			return $this->mark_img( $html, $attachment_id );
+		}
+
 		$classes = sprintf(
-			'aikz-wrap aikz-mode-%s aikz-pos-%s',
+			'aikz-wrap aikz-layout-%s aikz-mode-%s aikz-pos-%s',
+			$s['layout'],
 			$mode,
 			$s['position']
 		);

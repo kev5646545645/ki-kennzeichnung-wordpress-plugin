@@ -2,7 +2,7 @@
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 
 Markiert Bilder und Medien in der WordPress-Mediathek als KI-generiert und blendet
@@ -39,6 +39,12 @@ im Frontend automatisch einen Hinweis ein.
 * apply_filters( 'aikz_badge_html', string $html, int $attachment_id, string $text )
 * aikz_badge( int $attachment_id ) — Template-Funktion, gibt das Badge-HTML zurück
 
+== Wenn sich die Bildgröße ändert ==
+
+Einstellungen → KI-Kennzeichnung → "Einbindung ins Layout" durchprobieren:
+"Automatisch" (Standard) → "Container füllen" (Karten/Slider mit fester Bildhöhe)
+→ "Ohne Container" (Badge wird per JS gesetzt, das Bild bleibt unverändert im HTML).
+
 == Bekannte Grenzen ==
 
 * Themes, die Bilder über get_the_post_thumbnail_url() o. ä. selbst zusammenbauen,
@@ -50,6 +56,13 @@ im Frontend automatisch einen Hinweis ein.
   wird nicht geschrieben — beim Herunterladen des Bildes geht die Kennzeichnung verloren.
 
 == Changelog ==
+
+= 1.2.0 =
+* Fix: Der Hinweis-Container konnte die Bildgröße verändern (z. B. in Karten,
+  Rastern und Slidern mit fester Bildhöhe). Es werden keine Größenangaben mehr
+  auf das Bild gesetzt.
+* Neue Option "Einbindung ins Layout": Automatisch / Container füllen /
+  Ohne Container (JavaScript).
 
 = 1.1.0 =
 * Standard ist jetzt "Dauerhaft im Bild sichtbar"; bestehende Hover-Einstellungen
