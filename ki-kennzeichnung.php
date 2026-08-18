@@ -3,7 +3,7 @@
  * Plugin Name:       KI-Kennzeichnung für Medien
  * Plugin URI:        https://example.com/
  * Description:       Markiert Bilder und Medien in der Mediathek als KI-generiert und blendet im Frontend automatisch einen Hinweis ein – dauerhaft, beim Hover oder als Bildunterschrift.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            —
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class AIKZ_Plugin {
 
-	const VERSION   = '1.2.0';
+	const VERSION   = '1.3.0';
 	const META_FLAG = '_aikz_is_ai';
 	const META_TEXT = '_aikz_text';
 	const OPTION    = 'aikz_settings';
@@ -75,6 +75,7 @@ final class AIKZ_Plugin {
 	public function defaults() {
 		return array(
 			'label'          => 'KI-generiert',
+			'caption_label'  => '',               // leer = wie Badge-Text
 			'mode'           => 'always',         // always | both | caption | hover
 			'layout'         => 'auto',           // auto | fill | nowrap
 			'position'       => 'bottom-right',   // top-left | top-right | bottom-left | bottom-right
@@ -118,6 +119,8 @@ final class AIKZ_Plugin {
 		if ( '' === $out['label'] ) {
 			$out['label'] = $d['label'];
 		}
+
+		$out['caption_label'] = isset( $input['caption_label'] ) ? sanitize_text_field( $input['caption_label'] ) : '';
 
 		$out['mode']     = in_array( $input['mode'] ?? '', array( 'always', 'both', 'caption', 'hover' ), true ) ? $input['mode'] : $d['mode'];
 		$out['layout']   = in_array( $input['layout'] ?? '', array( 'auto', 'fill', 'nowrap' ), true ) ? $input['layout'] : $d['layout'];
@@ -208,6 +211,13 @@ final class AIKZ_Plugin {
 						<td>
 							<input type="text" class="regular-text" id="aikz_label" name="<?php echo esc_attr( $n ); ?>[label]" value="<?php echo esc_attr( $s['label'] ); ?>">
 							<p class="description"><?php esc_html_e( 'Kann pro Medium in der Mediathek überschrieben werden. Üblich: „KI-generiert“, „Mit KI erstellt“, „Bild: KI-generiert“.', 'ki-kennzeichnung' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="aikz_caption_label"><?php esc_html_e( 'Text der Zeile unter dem Bild', 'ki-kennzeichnung' ); ?></label></th>
+						<td>
+							<input type="text" class="regular-text" id="aikz_caption_label" name="<?php echo esc_attr( $n ); ?>[caption_label]" value="<?php echo esc_attr( $s['caption_label'] ); ?>" placeholder="<?php esc_attr_e( 'wie oben', 'ki-kennzeichnung' ); ?>">
+							<p class="description"><?php esc_html_e( 'Nur für die Darstellungen mit Textzeile. So kann im Bild ein kurzes „KI-Bild“ stehen und darunter der vollständige Satz, z. B. „Dieses Bild wurde mit KI erzeugt“. Leer lassen = gleicher Text wie im Bild.', 'ki-kennzeichnung' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -368,12 +378,19 @@ final class AIKZ_Plugin {
 		return (bool) apply_filters( 'aikz_is_ai', $flag, (int) $attachment_id );
 	}
 
-	public function label_for( $attachment_id ) {
+	public function label_for( $attachment_id, $context = 'badge' ) {
+		$s    = $this->settings();
 		$text = (string) get_post_meta( (int) $attachment_id, self::META_TEXT, true );
+
 		if ( '' === trim( $text ) ) {
-			$text = $this->settings()['label'];
+			if ( 'caption' === $context && '' !== trim( (string) $s['caption_label'] ) ) {
+				$text = $s['caption_label'];
+			} else {
+				$text = $s['label'];
+			}
 		}
-		return apply_filters( 'aikz_label', $text, (int) $attachment_id );
+
+		return apply_filters( 'aikz_label', $text, (int) $attachment_id, $context );
 	}
 
 	/* =====================================================================
@@ -652,7 +669,8 @@ final class AIKZ_Plugin {
 						host.appendChild(badge(t));
 					}
 					if(c.caption){
-						var cap=caption(t);
+						var ct=img.getAttribute("data-aikz-caption")||t;
+						var cap=caption(ct);
 						if(img.nextSibling)img.parentNode.insertBefore(cap,img.nextSibling);
 						else img.parentNode.appendChild(cap);
 					}
@@ -746,7 +764,7 @@ final class AIKZ_Plugin {
 	}
 
 	public function caption_html( $attachment_id ) {
-		$text = $this->label_for( $attachment_id );
+		$text = $this->label_for( $attachment_id, 'caption' );
 		return '<span class="aikz-caption">' . esc_html( $text ) . '</span>';
 	}
 
@@ -758,6 +776,11 @@ final class AIKZ_Plugin {
 			return $html;
 		}
 		$add = sprintf( ' data-aikz-label="%s"', esc_attr( $this->label_for( $attachment_id ) ) );
+
+		$caption = $this->label_for( $attachment_id, 'caption' );
+		if ( $caption !== $this->label_for( $attachment_id ) ) {
+			$add .= sprintf( ' data-aikz-caption="%s"', esc_attr( $caption ) );
+		}
 		if ( false === stripos( $html, 'data-ai-generated' ) ) {
 			$add .= ' data-ai-generated="true"';
 		}
@@ -829,7 +852,7 @@ final class AIKZ_Plugin {
 
 				// In Feeds gibt es kein CSS – Hinweis direkt als Text hinter das Bild.
 				if ( $is_feed ) {
-					return $m[0] . ' <span>(' . esc_html( $this->label_for( $id ) ) . ')</span>';
+					return $m[0] . ' <span>(' . esc_html( $this->label_for( $id, 'caption' ) ) . ')</span>';
 				}
 
 				$img = $m[0];

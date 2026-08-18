@@ -2,7 +2,7 @@
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 Markiert Bilder und Medien in der WordPress-Mediathek als KI-generiert und blendet
@@ -35,7 +35,7 @@ im Frontend automatisch einen Hinweis ein.
 == Hooks für Entwickler ==
 
 * apply_filters( 'aikz_is_ai', bool $is_ai, int $attachment_id )
-* apply_filters( 'aikz_label', string $text, int $attachment_id )
+* apply_filters( 'aikz_label', string $text, int $attachment_id, string $context )
 * apply_filters( 'aikz_badge_html', string $html, int $attachment_id, string $text )
 * aikz_badge( int $attachment_id ) — Template-Funktion, gibt das Badge-HTML zurück
 
@@ -56,6 +56,11 @@ Einstellungen → KI-Kennzeichnung → "Einbindung ins Layout" durchprobieren:
   wird nicht geschrieben — beim Herunterladen des Bildes geht die Kennzeichnung verloren.
 
 == Changelog ==
+
+= 1.3.0 =
+* Eigener Text für die Zeile unter dem Bild, getrennt vom Kurztext im Bild.
+  Ermöglicht z. B. "KI-Bild" im Bild und "Dieses Bild wurde mit KI erzeugt" darunter.
+* aikz_label-Filter erhält zusätzlich den Kontext ("badge" oder "caption").
 
 = 1.2.0 =
 * Fix: Der Hinweis-Container konnte die Bildgröße verändern (z. B. in Karten,
