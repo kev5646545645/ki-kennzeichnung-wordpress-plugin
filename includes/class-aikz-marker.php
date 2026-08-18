@@ -30,6 +30,115 @@ final class AIKZ_Marker {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ), 20 );
 		add_action( 'wp_footer', array( $this, 'render_editor_shell' ), 5 );
 		add_filter( 'body_class', array( $this, 'body_class' ) );
+		add_action( 'aikz_settings_after_form', array( $this, 'render_tools' ) );
+		add_action( 'admin_post_aikz_clear_marks', array( $this, 'handle_clear' ) );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Aufräumen                                                          */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Zählt gesetzte Kennzeichnungen nach Quelle.
+	 */
+	public function counts() {
+		global $wpdb;
+
+		$media = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = '1'",
+				AIKZ_Plugin::META_FLAG
+			)
+		);
+
+		$post_marks = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s",
+				self::META_MARKS
+			)
+		);
+
+		$url_marks = get_option( self::OPTION_URL, array() );
+		$url_marks = is_array( $url_marks ) ? count( $url_marks ) : 0;
+
+		return array(
+			'media'   => $media,
+			'manual'  => $post_marks + $url_marks,
+		);
+	}
+
+	public function render_tools() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$counts = $this->counts();
+		?>
+		<?php if ( isset( $_GET['aikz_cleared'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Alle visuellen Markierungen wurden gelöscht.', 'ki-kennzeichnung' ); ?></p></div>
+		<?php endif; ?>
+		<hr>
+		<h2 class="title"><?php esc_html_e( 'Übersicht und Aufräumen', 'ki-kennzeichnung' ); ?></h2>
+		<p class="description" style="max-width:46em">
+			<?php esc_html_e( 'Ein Hinweis kann aus zwei Quellen stammen. Wird ein Hinweis trotz Entfernen weiter angezeigt, ist meist noch die jeweils andere Quelle gesetzt – oder ein Cache liefert die alte Seite aus.', 'ki-kennzeichnung' ); ?>
+		</p>
+
+		<table class="widefat striped" style="max-width:46em">
+			<tbody>
+				<tr>
+					<td><strong><?php esc_html_e( 'Mediathek', 'ki-kennzeichnung' ); ?></strong><br>
+						<span class="description"><?php esc_html_e( 'Pro Datei gesetzt, gilt überall, wo das Bild eingebunden ist.', 'ki-kennzeichnung' ); ?></span></td>
+					<td style="width:8em">
+						<?php
+						printf(
+							/* translators: %d: number of marked media */
+							esc_html( _n( '%d Medium', '%d Medien', $counts['media'], 'ki-kennzeichnung' ) ),
+							(int) $counts['media']
+						);
+						?>
+					</td>
+					<td style="width:12em">
+						<a class="button" href="<?php echo esc_url( admin_url( 'upload.php?mode=list&aikz_filter=ai' ) ); ?>"><?php esc_html_e( 'Anzeigen', 'ki-kennzeichnung' ); ?></a>
+					</td>
+				</tr>
+				<tr>
+					<td><strong><?php esc_html_e( 'Visuelle Markierungen', 'ki-kennzeichnung' ); ?></strong><br>
+						<span class="description"><?php esc_html_e( 'Im Frontend-Editor gesetzt, gilt nur auf der jeweiligen Seite.', 'ki-kennzeichnung' ); ?></span></td>
+					<td>
+						<?php
+						printf(
+							/* translators: %d: number of pages with manual marks */
+							esc_html( _n( '%d Seite', '%d Seiten', $counts['manual'], 'ki-kennzeichnung' ) ),
+							(int) $counts['manual']
+						);
+						?>
+					</td>
+					<td>
+						<?php if ( $counts['manual'] ) : ?>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Wirklich alle visuellen Markierungen löschen? Die Mediathek-Kennzeichnungen bleiben erhalten.', 'ki-kennzeichnung' ) ); ?>');">
+								<input type="hidden" name="action" value="aikz_clear_marks">
+								<?php wp_nonce_field( 'aikz_clear_marks' ); ?>
+								<button type="submit" class="button button-link-delete"><?php esc_html_e( 'Alle löschen', 'ki-kennzeichnung' ); ?></button>
+							</form>
+						<?php else : ?>
+							<span class="description">—</span>
+						<?php endif; ?>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<?php
+	}
+
+	public function handle_clear() {
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'aikz_clear_marks' ) ) {
+			wp_die( esc_html__( 'Keine Berechtigung.', 'ki-kennzeichnung' ) );
+		}
+
+		delete_option( self::OPTION_URL );
+		delete_post_meta_by_key( self::META_MARKS );
+
+		wp_safe_redirect( add_query_arg( 'aikz_cleared', '1', admin_url( 'options-general.php?page=ki-kennzeichnung' ) ) );
+		exit;
 	}
 
 	/* ------------------------------------------------------------------ */

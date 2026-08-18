@@ -3,7 +3,7 @@
  * Plugin Name:       KI-Kennzeichnung für Medien
  * Plugin URI:        https://example.com/
  * Description:       Markiert Bilder und Medien in der Mediathek als KI-generiert und blendet im Frontend automatisch einen Hinweis ein – dauerhaft, beim Hover oder als Bildunterschrift.
- * Version:           1.4.0
+ * Version:           1.4.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            —
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class AIKZ_Plugin {
 
-	const VERSION   = '1.4.0';
+	const VERSION   = '1.4.2';
 	const META_FLAG = '_aikz_is_ai';
 	const META_TEXT = '_aikz_text';
 	const OPTION    = 'aikz_settings';
@@ -332,6 +332,8 @@ final class AIKZ_Plugin {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<?php do_action( 'aikz_settings_after_form' ); ?>
 		</div>
 		<?php
 	}

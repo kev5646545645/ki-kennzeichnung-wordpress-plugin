@@ -1,5 +1,62 @@
 /* Editor-Shell – liegt als Vollbild-Overlay über der Seite. */
 
+/*
+ * Reset: Themes (besonders Elementor) setzen globale Styles für button, input,
+ * select, a und Überschriften. Innerhalb des Editors werden die neutralisiert.
+ */
+.aikz-editor,
+.aikz-editor *,
+.aikz-editor *::before,
+.aikz-editor *::after {
+	box-sizing: border-box !important;
+}
+
+.aikz-editor button,
+.aikz-editor input,
+.aikz-editor select,
+.aikz-editor textarea,
+.aikz-editor a {
+	font-family: inherit !important;
+	font-size: inherit !important;
+	font-weight: 400 !important;
+	line-height: 1.5 !important;
+	letter-spacing: normal !important;
+	text-transform: none !important;
+	text-decoration: none !important;
+	text-shadow: none !important;
+	box-shadow: none !important;
+	min-height: 0 !important;
+	min-width: 0 !important;
+	width: auto !important;
+	max-width: none !important;
+	margin: 0 !important;
+	transition: none !important;
+	transform: none !important;
+	float: none !important;
+	position: static;
+}
+
+.aikz-editor h1,
+.aikz-editor h2,
+.aikz-editor h3,
+.aikz-editor p,
+.aikz-editor code,
+.aikz-editor strong,
+.aikz-editor span,
+.aikz-editor label {
+	font-family: inherit !important;
+	text-transform: none !important;
+	text-shadow: none !important;
+	color: inherit;
+}
+
+.aikz-editor button::before,
+.aikz-editor button::after,
+.aikz-editor a::before,
+.aikz-editor a::after {
+	content: none !important;
+}
+
 html.aikz-editing,
 html.aikz-editing body {
 	overflow: hidden !important;
@@ -31,8 +88,9 @@ html.aikz-editing body {
 	flex: 0 0 auto;
 }
 
-.aikz-brand {
-	font-weight: 600;
+.aikz-editor .aikz-brand {
+	font-weight: 600 !important;
+	color: #f0f0f1 !important;
 	letter-spacing: 0.01em;
 	white-space: nowrap;
 }
@@ -54,27 +112,39 @@ html.aikz-editing body {
 	border-radius: 6px;
 }
 
-.aikz-vp {
-	display: inline-flex;
+.aikz-editor .aikz-vp {
+	display: inline-flex !important;
 	align-items: center;
 	gap: 6px;
-	padding: 5px 10px;
-	border: 0;
-	border-radius: 4px;
-	background: transparent;
-	color: #c3c4c7;
+	padding: 5px 10px !important;
+	border: 0 !important;
+	border-radius: 4px !important;
+	background: transparent !important;
+	color: #c3c4c7 !important;
 	font: inherit;
 	cursor: pointer;
 }
 
-.aikz-vp:hover {
-	background: #3c434a;
-	color: #fff;
+.aikz-editor .aikz-vp:hover {
+	background: #3c434a !important;
+	color: #fff !important;
 }
 
-.aikz-vp.is-active {
-	background: #2271b1;
-	color: #fff;
+.aikz-editor .aikz-vp.is-active {
+	background: #2271b1 !important;
+	color: #fff !important;
+}
+
+.aikz-vp-icon {
+	display: inline-flex;
+	width: 16px;
+	height: 16px;
+}
+
+.aikz-vp-icon svg {
+	width: 100%;
+	height: 100%;
+	fill: currentColor;
 }
 
 @media (max-width: 900px) {
@@ -85,42 +155,48 @@ html.aikz-editing body {
 
 /* Buttons ------------------------------------------------------------- */
 
-.aikz-btn {
-	display: inline-flex;
+.aikz-editor .aikz-btn {
+	display: inline-flex !important;
 	align-items: center;
-	padding: 6px 12px;
-	border: 1px solid #3c434a;
-	border-radius: 4px;
-	background: #2c3338;
-	color: #f0f0f1;
+	justify-content: center;
+	padding: 6px 12px !important;
+	border: 1px solid #3c434a !important;
+	border-radius: 4px !important;
+	background: #2c3338 !important;
+	background-image: none !important;
+	color: #f0f0f1 !important;
 	font: inherit;
-	text-decoration: none;
+	white-space: nowrap;
+	text-decoration: none !important;
 	cursor: pointer;
 }
 
-.aikz-btn:hover {
-	background: #3c434a;
+.aikz-editor .aikz-btn:hover,
+.aikz-editor .aikz-btn:focus {
+	background: #3c434a !important;
+	color: #fff !important;
 }
 
-.aikz-btn-primary {
-	background: #2271b1;
-	border-color: #2271b1;
+.aikz-editor .aikz-btn-primary {
+	background: #2271b1 !important;
+	border-color: #2271b1 !important;
+	color: #fff !important;
 }
 
-.aikz-btn-primary:hover {
-	background: #135e96;
+.aikz-editor .aikz-btn-primary:hover {
+	background: #135e96 !important;
 }
 
-.aikz-btn-primary.is-active {
-	background: #d63638;
-	border-color: #d63638;
+.aikz-editor .aikz-btn-primary.is-active {
+	background: #d63638 !important;
+	border-color: #d63638 !important;
 }
 
-.aikz-btn-ghost {
-	background: transparent;
+.aikz-editor .aikz-btn-ghost {
+	background: transparent !important;
 }
 
-.aikz-btn[disabled] {
+.aikz-editor .aikz-btn[disabled] {
 	opacity: 0.5;
 	cursor: default;
 }
@@ -193,14 +269,15 @@ html.aikz-editing body {
 	overflow-y: auto;
 }
 
-.aikz-panel-title {
-	margin: 0;
-	padding: 12px 14px;
-	font-size: 12px;
+.aikz-editor .aikz-panel-title {
+	margin: 0 !important;
+	padding: 12px 14px !important;
+	font-size: 12px !important;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: #a7aaad;
+	letter-spacing: 0.06em !important;
+	color: #a7aaad !important;
+	line-height: 1.4 !important;
 	border-bottom: 1px solid #2c3338;
 }
 
@@ -243,22 +320,23 @@ html.aikz-editing body {
 	color: #a7aaad;
 }
 
-.aikz-row-remove {
+.aikz-editor .aikz-row-remove {
 	flex: 0 0 auto;
-	width: 24px;
-	height: 24px;
-	border: 0;
-	border-radius: 4px;
-	background: transparent;
-	color: #a7aaad;
-	font-size: 18px;
-	line-height: 1;
+	width: 24px !important;
+	height: 24px !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 4px !important;
+	background: transparent !important;
+	color: #a7aaad !important;
+	font-size: 18px !important;
+	line-height: 1 !important;
 	cursor: pointer;
 }
 
-.aikz-row-remove:hover {
-	background: #d63638;
-	color: #fff;
+.aikz-editor .aikz-row-remove:hover {
+	background: #d63638 !important;
+	color: #fff !important;
 }
 
 /* Formular ------------------------------------------------------------ */
@@ -292,15 +370,17 @@ html.aikz-editing body {
 	color: #c3c4c7;
 }
 
-.aikz-input {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 6px 8px;
-	border: 1px solid #3c434a;
-	border-radius: 4px;
-	background: #1d2327;
-	color: #f0f0f1;
+.aikz-editor .aikz-input {
+	display: block !important;
+	width: 100% !important;
+	padding: 6px 8px !important;
+	border: 1px solid #3c434a !important;
+	border-radius: 4px !important;
+	background: #1d2327 !important;
+	background-image: none !important;
+	color: #f0f0f1 !important;
 	font: inherit;
+	height: auto !important;
 }
 
 .aikz-form-actions {

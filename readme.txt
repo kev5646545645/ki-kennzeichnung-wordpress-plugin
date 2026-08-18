@@ -2,7 +2,7 @@
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.2
 License: GPLv2 or later
 
 Markiert Bilder und Medien in der WordPress-Mediathek als KI-generiert und blendet
@@ -71,6 +71,15 @@ Einstellungen → KI-Kennzeichnung → "Einbindung ins Layout" durchprobieren:
   wird nicht geschrieben — beim Herunterladen des Bildes geht die Kennzeichnung verloren.
 
 == Changelog ==
+
+= 1.4.2 =
+* Neue Übersicht in den Einstellungen: zeigt, wie viele Kennzeichnungen aus der
+  Mediathek und wie viele aus dem visuellen Editor stammen, mit Aufräum-Funktion.
+
+= 1.4.1 =
+* Fix: Theme-Styles (u. a. Elementor) machten die Editor-Buttons unlesbar.
+  Der Editor bringt jetzt einen eigenen, abgeschotteten Reset mit.
+* Viewport-Icons als SVG statt Emoji.
 
 = 1.4.0 =
 * Neu: visueller Markierungs-Editor. In der Admin-Bar auf "KI-Markierung" klicken,

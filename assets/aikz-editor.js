@@ -18,10 +18,16 @@
 	var frame = null;
 	var pending = null;
 
+	var ICONS = {
+		desktop: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 3h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-6v2h3v1H5v-1h3v-2H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm0 1v9h16V4H2z"/></svg>',
+		tablet: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 1h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm0 1v16h10V2H5zm5 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>',
+		mobile: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 1h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm0 1v16h8V2H6zm4 14a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>'
+	};
+
 	var VIEWPORTS = {
-		desktop: { width: 0, label: t.desktop, icon: '🖥' },
-		tablet: { width: 834, label: t.tablet, icon: '▭' },
-		mobile: { width: 390, label: t.mobile, icon: '▯' }
+		desktop: { width: 0, label: t.desktop },
+		tablet: { width: 834, label: t.tablet },
+		mobile: { width: 390, label: t.mobile }
 	};
 	var viewport = 'desktop';
 
@@ -57,7 +63,10 @@
 
 		var viewportButtons = Object.keys( VIEWPORTS ).map( function ( key ) {
 			var v = VIEWPORTS[ key ];
-			var btn = el( 'button', {
+			var icon = el( 'span', { class: 'aikz-vp-icon' } );
+			icon.innerHTML = ICONS[ key ];
+
+			return el( 'button', {
 				type: 'button',
 				class: 'aikz-vp' + ( key === viewport ? ' is-active' : '' ),
 				'data-vp': key,
@@ -65,8 +74,7 @@
 				onclick: function () {
 					setViewport( key );
 				}
-			}, [ el( 'span', { text: v.icon } ), el( 'span', { class: 'aikz-vp-label', text: v.label } ) ] );
-			return btn;
+			}, [ icon, el( 'span', { class: 'aikz-vp-label', text: v.label } ) ] );
 		} );
 
 		refs.viewportBar = el( 'div', { class: 'aikz-vp-bar' }, viewportButtons );
