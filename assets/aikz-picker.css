@@ -1,0 +1,45 @@
+/* Overlay-Elemente im Vorschau-iframe */
+
+.aikz-picker-ui {
+	position: absolute;
+	z-index: 2147483000;
+	pointer-events: none;
+	box-sizing: border-box;
+}
+
+.aikz-hover-box {
+	outline: 2px solid #2271b1;
+	background: rgba( 34, 113, 177, 0.14 );
+	border-radius: 2px;
+	transition: top 60ms linear, left 60ms linear, width 60ms linear, height 60ms linear;
+}
+
+.aikz-mark-box {
+	outline: 2px dashed #d63638;
+	background: rgba( 214, 54, 56, 0.08 );
+	border-radius: 2px;
+}
+
+html.aikz-picking,
+html.aikz-picking * {
+	cursor: crosshair !important;
+}
+
+/* Im Auswahlmodus keine Navigation auslösen. */
+html.aikz-picking a,
+html.aikz-picking button {
+	pointer-events: none;
+}
+
+/* Admin-Bar stört die Vorschau. */
+body.aikz-frame-mode #wpadminbar {
+	display: none !important;
+}
+
+body.aikz-frame-mode {
+	margin-top: 0 !important;
+}
+
+html.aikz-picking {
+	scroll-behavior: auto;
+}

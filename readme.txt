@@ -2,7 +2,7 @@
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 Markiert Bilder und Medien in der WordPress-Mediathek als KI-generiert und blendet
@@ -39,6 +39,21 @@ im Frontend automatisch einen Hinweis ein.
 * apply_filters( 'aikz_badge_html', string $html, int $attachment_id, string $text )
 * aikz_badge( int $attachment_id ) — Template-Funktion, gibt das Badge-HTML zurück
 
+== Visueller Markierungs-Editor ==
+
+Für Inhalte, die nicht aus der Mediathek kommen (KI-Texte, extern eingebundene
+Grafiken, ganze Abschnitte): Seite im Frontend aufrufen, in der Admin-Bar auf
+"KI-Markierung" klicken. Es öffnet sich ein Editor mit der Seite in einem Rahmen.
+"Element auswählen" anklicken, dann das gewünschte Element auf der Seite anklicken,
+Hinweistext und Darstellung wählen, hinzufügen, speichern.
+
+Oben lässt sich die Vorschaubreite zwischen Desktop, Tablet und Smartphone
+umschalten, um zu prüfen, ob der Hinweis in allen Breiten sichtbar bleibt.
+
+Markierungen in der Liste rechts anklicken springt zum Element; das ×  entfernt sie.
+Rot hinterlegte Einträge bedeuten, dass das Element nicht mehr gefunden wurde —
+etwa nach einer Layout-Änderung. Dann neu setzen.
+
 == Wenn sich die Bildgröße ändert ==
 
 Einstellungen → KI-Kennzeichnung → "Einbindung ins Layout" durchprobieren:
@@ -56,6 +71,16 @@ Einstellungen → KI-Kennzeichnung → "Einbindung ins Layout" durchprobieren:
   wird nicht geschrieben — beim Herunterladen des Bildes geht die Kennzeichnung verloren.
 
 == Changelog ==
+
+= 1.4.0 =
+* Neu: visueller Markierungs-Editor. In der Admin-Bar auf "KI-Markierung" klicken,
+  dann beliebige Elemente der Seite per Klick als KI-Inhalt kennzeichnen —
+  nicht nur Bilder, sondern auch Textblöcke, Überschriften oder ganze Abschnitte.
+* Vorschau in drei Breiten umschaltbar: Desktop, Tablet (834px), Smartphone (390px).
+* Markierungen werden pro Beitrag/Seite gespeichert; bei Archiven und der Startseite
+  pro URL-Pfad.
+* Speicherung über die REST-API (aikz/v1/marks), Rechte: edit_post bzw.
+  edit_theme_options.
 
 = 1.3.0 =
 * Eigener Text für die Zeile unter dem Bild, getrennt vom Kurztext im Bild.

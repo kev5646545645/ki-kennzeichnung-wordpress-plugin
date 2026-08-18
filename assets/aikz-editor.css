@@ -1,0 +1,322 @@
+/* Editor-Shell – liegt als Vollbild-Overlay über der Seite. */
+
+html.aikz-editing,
+html.aikz-editing body {
+	overflow: hidden !important;
+	height: 100%;
+}
+
+.aikz-editor {
+	position: fixed;
+	inset: 0;
+	z-index: 2147483000;
+	display: flex;
+	flex-direction: column;
+	background: #1d2327;
+	color: #f0f0f1;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+/* Kopfleiste ---------------------------------------------------------- */
+
+.aikz-bar {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 8px 12px;
+	background: #101517;
+	border-bottom: 1px solid #2c3338;
+	flex: 0 0 auto;
+}
+
+.aikz-brand {
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+}
+
+.aikz-bar-actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Viewport-Umschaltung ------------------------------------------------ */
+
+.aikz-vp-bar {
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+	background: #2c3338;
+	border-radius: 6px;
+}
+
+.aikz-vp {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: #c3c4c7;
+	font: inherit;
+	cursor: pointer;
+}
+
+.aikz-vp:hover {
+	background: #3c434a;
+	color: #fff;
+}
+
+.aikz-vp.is-active {
+	background: #2271b1;
+	color: #fff;
+}
+
+@media (max-width: 900px) {
+	.aikz-vp-label {
+		display: none;
+	}
+}
+
+/* Buttons ------------------------------------------------------------- */
+
+.aikz-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 12px;
+	border: 1px solid #3c434a;
+	border-radius: 4px;
+	background: #2c3338;
+	color: #f0f0f1;
+	font: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.aikz-btn:hover {
+	background: #3c434a;
+}
+
+.aikz-btn-primary {
+	background: #2271b1;
+	border-color: #2271b1;
+}
+
+.aikz-btn-primary:hover {
+	background: #135e96;
+}
+
+.aikz-btn-primary.is-active {
+	background: #d63638;
+	border-color: #d63638;
+}
+
+.aikz-btn-ghost {
+	background: transparent;
+}
+
+.aikz-btn[disabled] {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.aikz-status {
+	font-size: 12px;
+	color: #a7aaad;
+	min-width: 0;
+}
+
+.aikz-status.is-dirty {
+	color: #dba617;
+}
+
+.aikz-status.is-ok {
+	color: #68de7c;
+}
+
+.aikz-status.is-error {
+	color: #f86368;
+}
+
+/* Bühne --------------------------------------------------------------- */
+
+.aikz-body {
+	flex: 1 1 auto;
+	display: flex;
+	min-height: 0;
+}
+
+.aikz-stage {
+	flex: 1 1 auto;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding: 16px;
+	overflow: auto;
+	background: #2c3338;
+}
+
+.aikz-frame-wrap {
+	width: 100%;
+	height: 100%;
+	background: #fff;
+	transition: width 180ms ease;
+}
+
+.aikz-frame-wrap.is-device {
+	border-radius: 12px;
+	box-shadow: 0 10px 40px rgba( 0, 0, 0, 0.5 );
+	overflow: hidden;
+}
+
+.aikz-frame {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background: #fff;
+}
+
+/* Seitenleiste -------------------------------------------------------- */
+
+.aikz-panel {
+	flex: 0 0 300px;
+	display: flex;
+	flex-direction: column;
+	border-left: 1px solid #2c3338;
+	background: #1d2327;
+	overflow-y: auto;
+}
+
+.aikz-panel-title {
+	margin: 0;
+	padding: 12px 14px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #a7aaad;
+	border-bottom: 1px solid #2c3338;
+}
+
+.aikz-empty {
+	margin: 0;
+	padding: 14px;
+	color: #a7aaad;
+}
+
+.aikz-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 10px 14px;
+	border-bottom: 1px solid #2c3338;
+}
+
+.aikz-row.is-missing {
+	background: rgba( 214, 54, 56, 0.12 );
+}
+
+.aikz-row-main {
+	flex: 1 1 auto;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.aikz-row-sel {
+	display: block;
+	margin: 2px 0;
+	font-size: 11px;
+	color: #8c8f94;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aikz-row-meta {
+	font-size: 11px;
+	color: #a7aaad;
+}
+
+.aikz-row-remove {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	border: 0;
+	border-radius: 4px;
+	background: transparent;
+	color: #a7aaad;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.aikz-row-remove:hover {
+	background: #d63638;
+	color: #fff;
+}
+
+/* Formular ------------------------------------------------------------ */
+
+.aikz-form {
+	padding: 14px;
+	border-top: 1px solid #2c3338;
+	background: #101517;
+}
+
+.aikz-form-target {
+	margin: 0 0 10px;
+	font-size: 12px;
+	color: #a7aaad;
+	word-break: break-word;
+}
+
+.aikz-form-target code {
+	color: #72aee6;
+}
+
+.aikz-field {
+	display: block;
+	margin-bottom: 10px;
+}
+
+.aikz-field > span {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 12px;
+	color: #c3c4c7;
+}
+
+.aikz-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 6px 8px;
+	border: 1px solid #3c434a;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #f0f0f1;
+	font: inherit;
+}
+
+.aikz-form-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+@media (max-width: 782px) {
+	.aikz-body {
+		flex-direction: column;
+	}
+
+	.aikz-panel {
+		flex: 0 0 40%;
+		border-left: 0;
+		border-top: 1px solid #2c3338;
+	}
+}
