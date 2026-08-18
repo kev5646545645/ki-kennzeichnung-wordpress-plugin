@@ -3,7 +3,7 @@
  * Plugin Name:       KI-Kennzeichnung für Medien
  * Plugin URI:        https://example.com/
  * Description:       Markiert Bilder und Medien in der Mediathek als KI-generiert und blendet im Frontend automatisch einen Hinweis ein – dauerhaft, beim Hover oder als Bildunterschrift.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            —
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class AIKZ_Plugin {
 
-	const VERSION   = '1.0.0';
+	const VERSION   = '1.1.0';
 	const META_FLAG = '_aikz_is_ai';
 	const META_TEXT = '_aikz_text';
 	const OPTION    = 'aikz_settings';
@@ -64,6 +64,7 @@ final class AIKZ_Plugin {
 		// --- Einstellungen ---------------------------------------------------
 		add_action( 'admin_menu', array( $this, 'settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_init', array( $this, 'maybe_upgrade' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'action_links' ) );
 	}
 
@@ -74,7 +75,7 @@ final class AIKZ_Plugin {
 	public function defaults() {
 		return array(
 			'label'          => 'KI-generiert',
-			'mode'           => 'hover',          // always | hover | caption
+			'mode'           => 'always',         // always | both | caption | hover
 			'position'       => 'bottom-right',   // top-left | top-right | bottom-left | bottom-right
 			'bg'             => '#000000',
 			'opacity'        => 72,
@@ -117,7 +118,7 @@ final class AIKZ_Plugin {
 			$out['label'] = $d['label'];
 		}
 
-		$out['mode']     = in_array( $input['mode'] ?? '', array( 'always', 'hover', 'caption' ), true ) ? $input['mode'] : $d['mode'];
+		$out['mode']     = in_array( $input['mode'] ?? '', array( 'always', 'both', 'caption', 'hover' ), true ) ? $input['mode'] : $d['mode'];
 		$out['position'] = in_array( $input['position'] ?? '', array( 'top-left', 'top-right', 'bottom-left', 'bottom-right' ), true ) ? $input['position'] : $d['position'];
 
 		$out['bg']    = sanitize_hex_color( $input['bg'] ?? '' ) ?: $d['bg'];
@@ -132,6 +133,29 @@ final class AIKZ_Plugin {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Einmalige Migration: Der Hover-Modus war bis Version 1.0.0 Standard, erfüllt
+	 * eine Kennzeichnungspflicht aber nicht. Bestehende Installationen werden
+	 * einmalig auf die dauerhaft sichtbare Variante umgestellt.
+	 */
+	public function maybe_upgrade() {
+		$installed = get_option( 'aikz_version', '1.0.0' );
+		if ( version_compare( $installed, self::VERSION, '>=' ) ) {
+			return;
+		}
+
+		if ( version_compare( $installed, '1.1.0', '<' ) ) {
+			$saved = get_option( self::OPTION, array() );
+			if ( is_array( $saved ) && isset( $saved['mode'] ) && 'hover' === $saved['mode'] ) {
+				$saved['mode'] = 'always';
+				update_option( self::OPTION, $saved );
+				set_transient( 'aikz_upgrade_notice', 1, HOUR_IN_SECONDS * 12 );
+			}
+		}
+
+		update_option( 'aikz_version', self::VERSION );
 	}
 
 	public function action_links( $links ) {
@@ -163,6 +187,15 @@ final class AIKZ_Plugin {
 				<?php esc_html_e( 'Medien werden in der Mediathek einzeln als KI-generiert markiert. Der Hinweis wird danach im Frontend automatisch über dem Bild eingeblendet.', 'ki-kennzeichnung' ); ?>
 			</p>
 
+			<?php if ( 'hover' === $s['mode'] ) : ?>
+				<div class="notice notice-warning inline" style="margin:15px 0;max-width:46em">
+					<p>
+						<strong><?php esc_html_e( 'Aktuell wird der Hinweis nur beim Hover angezeigt.', 'ki-kennzeichnung' ); ?></strong><br>
+						<?php esc_html_e( 'Eine Kennzeichnung, die erst durch Mausbewegung sichtbar wird, ist nicht „ohne Weiteres erkennbar“ und erfüllt eine bestehende Kennzeichnungspflicht nicht. Auf Touch-Geräten gibt es zudem gar kein Hover. Wähle unten „Dauerhaft im Bild sichtbar“.', 'ki-kennzeichnung' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<form action="options.php" method="post">
 				<?php settings_fields( 'aikz_group' ); ?>
 
@@ -179,11 +212,14 @@ final class AIKZ_Plugin {
 						<th scope="row"><?php esc_html_e( 'Darstellung', 'ki-kennzeichnung' ); ?></th>
 						<td>
 							<fieldset>
-								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="always" <?php checked( $s['mode'], 'always' ); ?>> <?php esc_html_e( 'Dauerhaft im Bild sichtbar', 'ki-kennzeichnung' ); ?></label><br>
-								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="hover" <?php checked( $s['mode'], 'hover' ); ?>> <?php esc_html_e( 'Nur beim Hover / Tastaturfokus', 'ki-kennzeichnung' ); ?></label><br>
-								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="caption" <?php checked( $s['mode'], 'caption' ); ?>> <?php esc_html_e( 'Als Textzeile unter dem Bild', 'ki-kennzeichnung' ); ?></label>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="always" <?php checked( $s['mode'], 'always' ); ?>> <strong><?php esc_html_e( 'Dauerhaft im Bild sichtbar', 'ki-kennzeichnung' ); ?></strong> <?php esc_html_e( '(empfohlen)', 'ki-kennzeichnung' ); ?></label><br>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="both" <?php checked( $s['mode'], 'both' ); ?>> <?php esc_html_e( 'Dauerhaft im Bild + Textzeile darunter', 'ki-kennzeichnung' ); ?></label><br>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="caption" <?php checked( $s['mode'], 'caption' ); ?>> <?php esc_html_e( 'Nur Textzeile unter dem Bild', 'ki-kennzeichnung' ); ?></label><br>
+								<label><input type="radio" name="<?php echo esc_attr( $n ); ?>[mode]" value="hover" <?php checked( $s['mode'], 'hover' ); ?>> <?php esc_html_e( 'Nur beim Hover / Tastaturfokus', 'ki-kennzeichnung' ); ?> — <span style="color:#b32d2e"><?php esc_html_e( 'nicht für die Kennzeichnungspflicht geeignet', 'ki-kennzeichnung' ); ?></span></label>
 							</fieldset>
-							<p class="description"><?php esc_html_e( 'Hinweis: Auf Touch-Geräten gibt es kein Hover – im Hover-Modus wird der Hinweis dort automatisch dauerhaft angezeigt.', 'ki-kennzeichnung' ); ?></p>
+							<p class="description">
+								<?php esc_html_e( 'Wo eine Kennzeichnungspflicht besteht, muss der Hinweis ohne Zutun der Nutzer erkennbar sein. Der Hover-Modus versteckt ihn bis zur Mausbewegung und ist deshalb nur für rein dekorative Zwecke gedacht.', 'ki-kennzeichnung' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>
@@ -258,7 +294,14 @@ final class AIKZ_Plugin {
 					<style><?php echo $this->css(); // phpcs:ignore WordPress.Security.EscapeOutput ?></style>
 					<span class="aikz-wrap aikz-mode-<?php echo esc_attr( $s['mode'] ); ?> aikz-pos-<?php echo esc_attr( $s['position'] ); ?>">
 						<span style="display:block;width:320px;height:180px;background:linear-gradient(135deg,#7c8ea0,#3d4d5c)"></span>
-						<?php echo $this->badge_html( 0 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php
+						if ( 'caption' !== $s['mode'] ) {
+							echo $this->badge_html( 0 ); // phpcs:ignore WordPress.Security.EscapeOutput
+						}
+						if ( in_array( $s['mode'], array( 'caption', 'both' ), true ) ) {
+							echo $this->caption_html( 0 ); // phpcs:ignore WordPress.Security.EscapeOutput
+						}
+						?>
 					</span>
 				</div>
 
@@ -437,6 +480,16 @@ final class AIKZ_Plugin {
 	}
 
 	public function bulk_notice() {
+		if ( get_transient( 'aikz_upgrade_notice' ) && current_user_can( 'manage_options' ) ) {
+			delete_transient( 'aikz_upgrade_notice' );
+			printf(
+				'<div class="notice notice-info is-dismissible"><p>%s <a href="%s">%s</a></p></div>',
+				esc_html__( 'KI-Kennzeichnung: Die Anzeige wurde von „nur beim Hover“ auf „dauerhaft im Bild sichtbar“ umgestellt, damit der Hinweis ohne Zutun der Besucher erkennbar ist.', 'ki-kennzeichnung' ),
+				esc_url( admin_url( 'options-general.php?page=ki-kennzeichnung' ) ),
+				esc_html__( 'Einstellungen prüfen', 'ki-kennzeichnung' )
+			);
+		}
+
 		if ( ! isset( $_GET['aikz_done'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return;
 		}
@@ -586,10 +639,16 @@ final class AIKZ_Plugin {
 		.aikz-mode-hover:focus-within .aikz-badge{opacity:1;transform:none}
 		@media (hover:none){.aikz-mode-hover .aikz-badge{opacity:1;transform:none}}
 		@media (prefers-reduced-motion:reduce){.aikz-badge{transition:none}}
-		.aikz-mode-caption{display:block;line-height:normal}
-		.aikz-mode-caption .aikz-badge{position:static;display:flex;margin:.4em 0 0;padding:0;
-			background:none;color:inherit;opacity:.75;white-space:normal;max-width:100%;
-			font-size:' . max( 10, (int) $s['font_size'] - 1 ) . 'px;-webkit-backdrop-filter:none;backdrop-filter:none}
+		.aikz-caption{display:block;max-width:100%;margin:.4em 0 0;line-height:1.4;color:inherit;opacity:.8;
+			font-size:' . max( 10, (int) $s['font_size'] - 1 ) . 'px}
+		/* Sichtbarkeit der Kennzeichnung gegen Theme-Overrides absichern. */
+		.aikz-mode-always .aikz-badge,.aikz-mode-both .aikz-badge{
+			opacity:1!important;visibility:visible!important;display:inline-flex!important}
+		.aikz-caption{visibility:visible!important}
+		@media print{
+			.aikz-badge,.aikz-caption{opacity:1!important;visibility:visible!important;transform:none!important;
+				-webkit-print-color-adjust:exact;print-color-adjust:exact}
+		}
 		';
 
 		return preg_replace( '/\s*\n\s*/', ' ', trim( $css ) );
@@ -615,19 +674,30 @@ final class AIKZ_Plugin {
 		return apply_filters( 'aikz_badge_html', $html, (int) $attachment_id, $text );
 	}
 
+	public function caption_html( $attachment_id ) {
+		$text = $this->label_for( $attachment_id );
+		return '<span class="aikz-caption">' . esc_html( $text ) . '</span>';
+	}
+
 	private function wrap( $html, $attachment_id ) {
 		if ( false !== strpos( $html, 'aikz-wrap' ) ) {
 			return $html; // Bereits gekennzeichnet.
 		}
-		$s = $this->settings();
+		$s    = $this->settings();
+		$mode = $s['mode'];
 
 		$classes = sprintf(
 			'aikz-wrap aikz-mode-%s aikz-pos-%s',
-			$s['mode'],
+			$mode,
 			$s['position']
 		);
 
-		return '<span class="' . esc_attr( $classes ) . '">' . $html . $this->badge_html( $attachment_id ) . '</span>';
+		$overlay = ( 'caption' === $mode ) ? '' : $this->badge_html( $attachment_id );
+		$caption = in_array( $mode, array( 'caption', 'both' ), true ) ? $this->caption_html( $attachment_id ) : '';
+
+		return '<span class="' . esc_attr( $classes ) . '" data-ai-generated="true">'
+			. $html . $overlay . $caption
+			. '</span>';
 	}
 
 	private function skip_output() {
@@ -645,33 +715,57 @@ final class AIKZ_Plugin {
 	}
 
 	public function filter_content( $content ) {
-		if ( $this->skip_output() || empty( $this->settings()['apply_content'] ) ) {
+		if ( empty( $this->settings()['apply_content'] ) ) {
+			return $content;
+		}
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return $content;
 		}
 		if ( '' === $content || false === strpos( $content, 'wp-image-' ) ) {
 			return $content;
 		}
 
+		$is_feed = is_feed();
+
 		return preg_replace_callback(
 			'#<img\b[^>]*?wp-image-(\d+)[^>]*>#i',
-			function ( $m ) {
+			function ( $m ) use ( $is_feed ) {
 				$id = (int) $m[1];
 				if ( ! $id || ! $this->is_ai( $id ) ) {
 					return $m[0];
 				}
-				return $this->wrap( $m[0], $id );
+
+				// In Feeds gibt es kein CSS – Hinweis direkt als Text hinter das Bild.
+				if ( $is_feed ) {
+					return $m[0] . ' <span>(' . esc_html( $this->label_for( $id ) ) . ')</span>';
+				}
+
+				$img = $m[0];
+				if ( false === stripos( $img, 'data-ai-generated' ) ) {
+					$img = preg_replace( '#<img\b#i', '<img data-ai-generated="true"', $img, 1 );
+				}
+
+				return $this->wrap( $img, $id );
 			},
 			$content
 		);
 	}
 
 	public function filter_image_attributes( $attr, $attachment ) {
-		if ( empty( $this->settings()['alt_suffix'] ) || is_admin() ) {
+		if ( is_admin() && ! wp_doing_ajax() ) {
 			return $attr;
 		}
 		if ( ! $attachment || ! $this->is_ai( $attachment->ID ) ) {
 			return $attr;
 		}
+
+		// Maschinenlesbarer Marker – unabhängig von der optischen Darstellung.
+		$attr['data-ai-generated'] = 'true';
+
+		if ( empty( $this->settings()['alt_suffix'] ) ) {
+			return $attr;
+		}
+
 		$label = $this->label_for( $attachment->ID );
 		$alt   = isset( $attr['alt'] ) ? trim( $attr['alt'] ) : '';
 
@@ -689,6 +783,8 @@ final class AIKZ_Plugin {
 
 	public static function uninstall() {
 		delete_option( self::OPTION );
+		delete_option( 'aikz_version' );
+		delete_transient( 'aikz_upgrade_notice' );
 		// Die Meta-Kennzeichnungen an den Medien bleiben bewusst erhalten.
 	}
 }
